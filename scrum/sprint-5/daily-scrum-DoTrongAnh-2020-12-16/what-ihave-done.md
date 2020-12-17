@@ -1,0 +1,3 @@
+# What I have done
+
+Added more outline functionalities to the input form, such as learning outcomes' graduate attribute, Accreditation Unit, course instructors, textbooks, etc...
