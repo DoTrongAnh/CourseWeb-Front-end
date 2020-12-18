@@ -11,5 +11,25 @@
 }
 .component{
   background-color:#e4ed78;
-  margin-top: 40px;
+  margin-top: 20px;
+}
+.sections{
+  background-color:#fca1a1;
+  margin-top: 20px;
+}
+.instructor{
+  background-color:#d3a1fc;
+  margin-top: 20px;
+}
+.outcome{
+  background-color:#a1fcca;
+  margin-top: 20px;
+}
+.outlineList{
+  margin-left: 150px;
+  margin-right: 150px;
+}
+.textbook{
+  background-color:#a0f08e;
+  margin-top: 20px;
 }

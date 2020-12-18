@@ -13,12 +13,13 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import Paper from '@material-ui/core/Paper';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
-import { Font, Page, Text, View, Document, StyleSheet, pdf, PDFViewer } from '@react-pdf/renderer';
+import { Font, Page, Text, View, Document, StyleSheet, pdf, PDFViewer, Image } from '@react-pdf/renderer';
 import { Table, TableHeader, TableCell, TableBody, DataTableCell } from '@david.kucsai/react-pdf-table';
 import { saveAs } from 'file-saver';
 import TimePicker from 'react-time-picker';
 import fontBold from './font-roboto/Roboto-Bold.ttf';
 import font from './font-roboto/Roboto-Regular.ttf';
+import image from './schulich.png';
 
 Font.register({ family: 'Roboto', fonts: [
   {src: fontBold, fontWeight: 'bold'},
@@ -31,7 +32,10 @@ Font.register({ family: 'Roboto', fonts: [
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
-    backgroundColor: '#E4E4E4'
+    backgroundColor: 'white'
+  },
+  header:{
+    flexDirection: 'row'
   },
   title: {
     fontFamily: 'Roboto',
@@ -71,7 +75,15 @@ tableRow:{
     margin: 10,
     padding: 10,
     flexGrow: 1
-  }
+  },
+  blackLine: {
+    backgroundColor:'black',
+    color:'white'
+  },
+  image: {
+        backgroundColor: 'white',
+        padding: 10,
+      },
 });
 
 // Create Document Component
@@ -101,9 +113,33 @@ const OutlineDoc = (props) => {
   return (
   <Document>
     <Page size="A4" style={styles.page} >
+      <View style={[styles.section, styles.header]}>
+        <Image style={styles.image} src={image} />
+        <View style={styles.section}>
+        </View>
+        <View style={{flexDirection:'column',flexGrow: 1}}>
+        <Text style={styles.title}>COURSE OUTLINE{"\n"+outline.term.toUpperCase()}</Text>
+        <Table data={[{header:"Prepared",date:outline.created,name:outline.author},
+                      {header:"Approved",date:"",name:""}]}>
+        <TableHeader textAlign={"left"}>
+        <TableCell>{"         "}</TableCell>
+        <TableCell style={styles.title}>Date</TableCell>
+        <TableCell style={styles.title}>Initials</TableCell>
+        </TableHeader>
+        <TableBody textAlign={"left"}>
+        <DataTableCell style={styles.title} getContent={(r)=>r.header} />
+        <DataTableCell getContent={(r)=>r.date} />
+        <DataTableCell getContent={(r)=>r.name} />
+        </TableBody>
+        </Table>
+        </View>
+      </View>
       <View style={styles.section} wrap={false}>
         <Text style={styles.title}>1. Calendar Information{"\n"}</Text>
-        <Text style={styles.text}>{outline.description + "\n"}Course hours:{outline.hours+"\n"}Course credits:{outline.credits+"\n"}</Text>
+        <Text style={[styles.title, styles.blackLine]}>{outline.courseCode}</Text>
+        <Text style={[styles.title, styles.blackLine]}>{outline.courseName}</Text>
+        <Text style={styles.text}>{outline.description + "\n"}Course hours:{" " + outline.hours+"\n"}Course credits:{" " + outline.credits+"\n"}</Text>
+        <Text style={styles.text}>Calendar Reference:{" http://"}www.ucalgary.ca/pubs/calendar/current/software-engineering-for-engineers.html</Text>
       </View>
       <View style={styles.section} wrap={false}>
         <Text style={styles.title}>2. Learning Outcomes{"\n"}</Text>
@@ -179,7 +215,7 @@ const OutlineDoc = (props) => {
         </Table></View>
         )}
       {outline.instructors.filter((prof)=>{return prof.role === "ta";}).length > 0 &&
-      (<View><Text style={[styles.text, styles.underline]}>Course TA{"\n"}</Text>
+      (<View><Text style={[styles.text, styles.underline]}>Teaching Assistants{"\n"}</Text>
         <Table data={outline.instructors.filter((prof)=>{return prof.role === "ta";})} >
           <TableHeader textAlign={"center"}>
           <TableCell style={styles.title}>Section</TableCell>
@@ -210,6 +246,7 @@ const OutlineDoc = (props) => {
       </View>
       <View style={styles.section} wrap={false}>
         <Text style={styles.title}>7. Final Grade Determination{"\n"}</Text>
+        <Text style={styles.text}>The final grade in this course will be based on the following components:{"\n"}</Text>
         <Table data={components}>
         <TableHeader style={styles.tableRow} textAlign={"center"}>
         <TableCell style={styles.title}>
@@ -250,12 +287,16 @@ const OutlineDoc = (props) => {
       {outline.textbooks.filter((book)=>{return book.required===true;}).length > 0 &&
       (<View><Text style={styles.underline}>The following textbook(s) is required for this course{"\n\n"}</Text>
         {outline.textbooks.filter((book)=>{return book.required===true;}).map((book,identity)=>{
-                  const tableContent=[{header:"Title",content:book.title},
+                  const tableContent=[
                                       {header:"Author(s)",content:book.author},
                                       {header:"Edition, Year",content:book.editionYear},
                                       {header:"Publisher",content:book.publisher}];
                   return (
                   <Table data={tableContent}>
+                    <TableHeader textAlign={"left"}>
+                    <TableCell style={styles.title}>Title</TableCell>
+                    <TableCell style={styles.title}>{book.title}</TableCell>
+                    </TableHeader>
                     <TableBody textAlign={"left"}>
                     <DataTableCell style={styles.title} getContent={(r)=>r.header} />
                     <DataTableCell getContent={(r)=>r.content} />
@@ -266,12 +307,16 @@ const OutlineDoc = (props) => {
         {outline.textbooks.filter((book)=>{return book.required===false;}).length > 0 &&
       (<View><Text style={styles.underline}>The following textbook(s) is recommended for this course{"\n\n"}</Text>
         {outline.textbooks.filter((book)=>{return book.required===false;}).map((book,identity)=>{
-                  const tableContent=[{header:"Title",content:book.title},
+                  const tableContent=[
                                       {header:"Author(s)",content:book.author},
                                       {header:"Edition, Year",content:book.editionYear},
                                       {header:"Publisher",content:book.publisher}];
                   return (
                   <Table data={tableContent}>
+                    <TableHeader textAlign={"left"}>
+                    <TableCell style={styles.title}>Title</TableCell>
+                    <TableCell style={styles.title}>{book.title}</TableCell>
+                    </TableHeader>
                     <TableBody textAlign={"left"}>
                     <DataTableCell style={styles.title} getContent={(r)=>r.header} />
                     <DataTableCell getContent={(r)=>r.content} />
@@ -320,7 +365,7 @@ function OutlineInputForm(props) {
                               description: "n/a",
                               hours: "n/a",
                               courseName:"n/a",
-                              courseCode:"n/a", exam:"n/a"});
+                              courseCode:"n/a", exam:"n/a",author:"n/a",term:"n/a"});
   const [components, setComponents] = useState([{
     name:"n/a",
     outcomes:[0],
@@ -332,7 +377,7 @@ function OutlineInputForm(props) {
   const [calculator, setCalculator] = useState(false);
   const [sections, setSections] = useState([{name:"n/a",days:[],timestart:"n/a",timeend:"n/a",location:"n/a",type:"n/a",studentPerSupervisor:""}]);
   const [instructors, setInstructors] = useState([{role:"",fname:"",lname:"",phone:"",office:"",email:"",section:""}]);
-  const [textbooks, setTextbooks] = useState([{title:"",author:"",editionYear:"",publisher:"",required:undefined}]);
+  const [textbooks, setTextbooks] = useState([{title:"",author:"",editionYear:"",publisher:"",required:false}]);
 const handleCalulator = (event) => {
   setCalculator(event.target.checked);
 };
@@ -352,7 +397,7 @@ const removeTextbook = (index) =>{
 };
 
 const addTextbook = () =>{
-  setTextbooks([...textbooks, {title:"",author:"",editionYear:"",publisher:"",required:undefined}])
+  setTextbooks([...textbooks, {title:"",author:"",editionYear:"",publisher:"",required:false}])
 }
 
 const handleLabChange = (event) =>{
@@ -510,10 +555,11 @@ const handleCreditChange = (event) =>{
                                         components:[{
                                           name:"",
                                           outcomes:[0],
-                                          weight:0.0
+                                          weight:0.0, author:"",term:""
                                         }]};
     newOutline.description = titles.description;
     newOutline.hours = titles.hours;
+    newOutline.term = titles.term;
     newOutline.credits = credits;
     newOutline.exam = titles.exam;
     newOutline.instructors = [...instructors];
@@ -525,6 +571,7 @@ const handleCreditChange = (event) =>{
     newOutline.calculator = calculator;
     newOutline.sections = [...sections];
     newOutline.components = [...components];
+    newOutline.author = titles.author;
     var temporary = [...textbooks];
     for(var a = 0; a < temporary.length; a++)
       if(temporary[a].required === undefined) temporary.splice(a--, 1);
@@ -532,6 +579,9 @@ const handleCreditChange = (event) =>{
     const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   return (
       <div className="box">
+        <h5 className="title is-5">Term:
+        <input name="term" onChange={handleTitleChange} />
+        </h5>
         <h5 className="title is-5">Course code:
         <input name="courseCode" onChange={handleTitleChange} />
         </h5>
@@ -563,7 +613,7 @@ const handleCreditChange = (event) =>{
       	{inputList.map((x, i) => {
       		const label = "Outcome " + (i+1) + ":";
         	return (
-          		<div>
+          		<div className="outcome">
           		<label>{label}
             	<input
             	style={{width: "500px"}}
@@ -604,7 +654,7 @@ const handleCreditChange = (event) =>{
         <h5 className="title is-5">Course section(s):</h5>
         {sections.map((section, index) => {
           return (
-          <div className="section">
+          <div className="sections">
           <h6 className="title is-6">Section {index+1}:<input name="name" onChange={(e)=>handleSection(e,index)} /></h6>
           <h6 className="title is-6">Day(s) of the week
           {days.map((day) => {
@@ -613,28 +663,28 @@ const handleCreditChange = (event) =>{
                       );
                     })}
           </h6>
-          <h6 className="title is-6">Location:<input name="location" onChange={(e)=>handleSection(e,index)} /></h6>
-          <h6 className="title is-6">Time start:<TimePicker name="timestart" onChange={(e)=>handleSectionStart(e,index)} /></h6>
-          <h6 className="title is-6">Time end:<TimePicker name="timeend" onChange={(e)=>handleSectionEnd(e,index)} /></h6>
-          <h6 className="title is-6">Section type:<Select name="type" onChange={(e)=>handleSection(e,index)}>
+          <label>Location:<input name="location" onChange={(e)=>handleSection(e,index)} /></label>
+          <label>Time start:<TimePicker name="timestart" onChange={(e)=>handleSectionStart(e,index)} /></label>
+          <label>Time end:<TimePicker name="timeend" onChange={(e)=>handleSectionEnd(e,index)} /></label>
+          <label>Section type:<Select name="type" onChange={(e)=>handleSection(e,index)}>
           <MenuItem value={"lecture"}>Lecture</MenuItem>
           <MenuItem value={"tutorial"}>Tutorial</MenuItem>
           <MenuItem value={"lab"}>Lab</MenuItem>
-          </Select></h6>
-          <h6 className="title is-6">Students to Supervisor:<input name="studentPerSupervisor" onChange={(e)=>handleSection(e,index)} /></h6>
+          </Select></label>
+          <label>Students to Supervisor:<input name="studentPerSupervisor" onChange={(e)=>handleSection(e,index)} />
           {sections.length !== 1 && <button className="button is-small is-danger" onClick={()=>removeSection(index)}>Remove</button>}
-          {sections.length - 1 === index && <button className="button is-small is-primary" onClick={addSection}>Add</button>}
+          {sections.length - 1 === index && <button className="button is-small is-primary" onClick={addSection}>Add</button>}</label>
           </div>);
         })}
         <h5 className="title is-5">Course categories accreditation unit:</h5>
-        <label>Math:<input name="math" onChange={handleCategoryChange}/></label>
-        <label>Natural Science:<input name="naturalScience" onChange={handleCategoryChange}/></label>
-        <label>Complementary Studies:<input name="complementary" onChange={handleCategoryChange}/></label>
-        <label>Engineering Science:<input name="engineerScience" onChange={handleCategoryChange}/></label>
-        <label>Engineering Design:<input name="engineerDesign" onChange={handleCategoryChange}/></label>
+        <label>Math:<input style={{width: "40px"}} name="math" onChange={handleCategoryChange}/></label>
+        <label>Natural Science:<input style={{width: "40px"}} name="naturalScience" onChange={handleCategoryChange}/></label>
+        <label>Complementary Studies:<input style={{width: "40px"}} name="complementary" onChange={handleCategoryChange}/></label>
+        <label>Engineering Science:<input style={{width: "40px"}} name="engineerScience" onChange={handleCategoryChange}/></label>
+        <label>Engineering Design:<input style={{width: "40px"}} name="engineerDesign" onChange={handleCategoryChange}/></label>
         <h5 className="title is-5">Lab experience:</h5>
         <label>Lab Type:<input name="type" onChange={handleLabChange} /></label>
-        <label>Number of Labs:<input name="number" onChange={handleLabChange} /></label>
+        <label>Number of Labs:<input style={{width: "40px"}} name="number" onChange={handleLabChange} /></label>
         <label>Lab Safety Taught?<Select name="safetyTaught" onChange={handleLabChange}>
         <MenuItem value={true}>Yes</MenuItem>
         <MenuItem value={false}>No</MenuItem>
@@ -647,17 +697,17 @@ const handleCreditChange = (event) =>{
         {instructors.map((prof, index) => {
           return (
             <div className="instructor">
-            <label>Instructor first name:<input name="fname" value={prof.fname} onChange={(e)=>handleInstructors(e,index)} /></label>
-            <label>Family name:<input name="lname" value={prof.lname} onChange={(e)=>handleInstructors(e,index)} /></label>
-            <label>Phone:<input name="phone" value={prof.phone} onChange={(e)=>handleInstructors(e,index)} /></label>
-            <label>Office:<input name="office" value={prof.office} onChange={(e)=>handleInstructors(e,index)} /></label>
+            <label>Instructor first name:<input style={{width: "100px"}} name="fname" value={prof.fname} onChange={(e)=>handleInstructors(e,index)} /></label>
+            <label>Family name:<input style={{width: "100px"}} name="lname" value={prof.lname} onChange={(e)=>handleInstructors(e,index)} /></label>
+            <label>Phone:<input style={{width: "100px"}} name="phone" value={prof.phone} onChange={(e)=>handleInstructors(e,index)} /></label>
+            <label>Office:<input style={{width: "70px"}} name="office" value={prof.office} onChange={(e)=>handleInstructors(e,index)} /></label>
             <label>Email:<input name="email" value={prof.email} onChange={(e)=>handleInstructors(e,index)} /></label>
             <label>Role:<Select name="role" onChange={(e)=>handleInstructors(e,index)}>
             <MenuItem value="instructor">Instructor</MenuItem>
             <MenuItem value="coordinator">Course Coordinator</MenuItem>
             <MenuItem value="ta">TA</MenuItem>
             </Select></label>
-            <label>Section:<Select name="section" onChange={(e)=>handleInstructors(e,index)}>
+            <label>Section:<Select name="sections" onChange={(e)=>handleInstructors(e,index)}>
             {sections.map((section) => (<MenuItem value={section.name}>{section.name}</MenuItem>))}
             </Select></label>
             {instructors.length !== 1 && <button className="button is-small is-danger" onClick={()=>removeInstructor(index)}>Remove</button>}
@@ -676,7 +726,7 @@ const handleCreditChange = (event) =>{
           value={titles.exam}
           onChange={e=>handleTitleChange(e)}
         />
-        <h6 className="title is-6">Examinations:<Checkbox checked={calculator} onChange={handleCalulator} /></h6>
+        <h6 className="title is-6">Allow calculators during exam?:<Checkbox checked={calculator} onChange={handleCalulator} /></h6>
         <h5 className="title is-5">Course component(s):</h5>
       	{components.map((component, index1) => {
           return(
@@ -713,6 +763,7 @@ const handleCreditChange = (event) =>{
           </div>
           );
         })}
+        <h5 className="title is-5">Your initials:<input name="author" onChange={handleTitleChange} /></h5>
         <div className="ConfirmBtn">
         <button className="button is-success" value={JSON.stringify(newOutline)} onClick={props.handler}>Submit</button>
         </div>
@@ -725,6 +776,7 @@ function OutlineForm(props){
   const filename = outline.courseCode + "_" + outline.courseName + "_" + outline.created + ".pdf";
   return(
   <div className="box">
+  <h5 className="title is-5">Term: {outline.term}</h5>
   <h5 className="title is-5">Course code: {outline.courseCode}</h5>
   <h5 className="title is-5">Course name: {outline.courseName}</h5>
   <h5 className="title is-5">Course description:</h5>
@@ -754,7 +806,7 @@ function OutlineForm(props){
     </div>}
   {outline.sections.map((section, index) => {
     return (
-      <div className="section">
+      <div className="sections">
         <h5 className="title is-5">Section {index+1}: {section.name}</h5>
         <h6 className="title is-6">Weekly schedule: {section.days.length >= 0? section.days.join() : "n/a"}</h6>
         <h6 className="title is-6">Time: {section.timestart + " - " + section.timeend}</h6>
@@ -794,10 +846,11 @@ function OutlineForm(props){
     <h5 className="title is-5">Textbook {index+1}: {textbook.title}</h5>
     <h6 className="title is-6">Author(s): {textbook.author}</h6>
     <h6 className="title is-6">Edition, Year: {textbook.editionYear}</h6>
-    <h6 className="title is-6">Publisher: {textbook.published}</h6>
+    <h6 className="title is-6">Publisher: {textbook.publisher}</h6>
     </div>
     );
   })}
+  <h5 className="title is-5">Author:{" " + outline.author}</h5>
   <PDFViewer>
   <OutlineDoc value={props.value} />
   </PDFViewer>
@@ -821,10 +874,11 @@ function App(){
   const addOutline = (event) =>{
     const newOutline = JSON.parse(event.target.value);
     const today = new Date();
-    const dateform = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+    const dateform = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0');
     newOutline.created = dateform;
     setOutlines([...outlines, newOutline]);
-    setAnchors([...anchors, null])
+    setAnchors([...anchors, null]);
+    alert("New course outline has been added to the list.");
   };
 
   const handleOpenForm = (event, index) => {
@@ -857,8 +911,9 @@ function App(){
   return (
     
     <div className="App">
-      <Paper style={{maxHeight: 600, overflow: 'auto'}}>
-        <List className="outlineList">
+    <h1 className="title is-1">Course outline list</h1>
+      <Paper className="outlineList" style={{maxHeight: 600, overflow: 'auto'}}>
+        <List >
           {outlines.map((outline, index) => {
             const title = outline.courseCode + "_" + outline.courseName + "_" + outline.created;
             return (<ListItem button onClick={(e)=>handleOpenForm(e, index)}>
