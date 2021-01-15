@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import "bulma/css/bulma.css"
 import Popover from '@material-ui/core/Popover';
@@ -13,7 +13,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import Paper from '@material-ui/core/Paper';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
-import { Font, Page, Text, View, Document, StyleSheet, pdf, PDFViewer, Image } from '@react-pdf/renderer';
+import { Font, Page, Text, View, Document, StyleSheet, pdf, Image } from '@react-pdf/renderer';
 import { Table, TableHeader, TableCell, TableBody, DataTableCell } from '@david.kucsai/react-pdf-table';
 import { saveAs } from 'file-saver';
 import TimePicker from 'react-time-picker';
@@ -119,7 +119,7 @@ const OutlineDoc = (props) => {
         </View>
         <View style={{flexDirection:'column',flexGrow: 1}}>
         <Text style={styles.title}>COURSE OUTLINE{"\n"+outline.term.toUpperCase()}</Text>
-        <Table data={[{header:"Prepared",date:outline.created,name:outline.author},
+        <Table data={[{header:"Prepared",date:outline.created.substring(0,10),name:outline.author},
                       {header:"Approved",date:"",name:""}]}>
         <TableHeader textAlign={"left"}>
         <TableCell>{"         "}</TableCell>
@@ -719,7 +719,7 @@ const handleCreditChange = (event) =>{
             <MenuItem value="coordinator">Course Coordinator</MenuItem>
             <MenuItem value="ta">TA</MenuItem>
             </Select></label>
-            <label>Section:<Select name="sections" onChange={(e)=>handleInstructors(e,index)}>
+            <label>Section:<Select name="section" onChange={(e)=>handleInstructors(e,index)}>
             {sections.map((section) => (<MenuItem value={section.name}>{section.name}</MenuItem>))}
             </Select></label>
             {instructors.length !== 1 && <button className="button is-small is-danger" onClick={()=>removeInstructor(index)}>Remove</button>}
@@ -801,6 +801,7 @@ const handleCreditChange = (event) =>{
           );
         })}
         <h5 className="title is-5">Your initials:<input name="author" onChange={handleTitleChange} /></h5>
+        <TextareaAutosize rowsMin={4} aria-label="minimum height" value={JSON.stringify(newOutline)} />
         <div className="ConfirmBtn">
         <button className="button is-success" value={JSON.stringify(newOutline)} onClick={props.handler}>Submit</button>
         </div>
@@ -904,34 +905,50 @@ function OutlineForm(props){
     );
   })}
   <h5 className="title is-5">Author:{" " + outline.author}</h5>
-  <PDFViewer>
-  <OutlineDoc value={props.value} />
-  </PDFViewer>
   <LazyDownloadPDFButton name={filename} value={props.value} />
   </div>
   );
 }
 
 function App(){
+  const link = 'http://localhost:8000/api/courseoutlines/';
+  const contentType = 'application/json';
   const [anchorEl, setAnchorEl] = useState(null);
   const [anchors, setAnchors] = useState([null]);
-  const [outlines, setOutlines] = useState([{description:"", courseName:"", courseCode:"",created:"",
-                                        hours:"",
-                                        credits:3,
-                                        courseOutcomes:[""],
-                                        components:[{
-                                          name:"",
-                                          outcomes:[0],
-                                          weight:0.0
-                                        }]}]);
+  const [outlines, setOutlines] = useState([]);
+  useEffect(() => {
+    fetch(link)
+      .then(async response => {
+        const data = await response.json();
+        if(!response.ok){
+          const error = (data && data.message) || response.statusText;
+          return Promise.reject(error);
+        }
+        setOutlines(data.results);
+      })
+      .catch(error => {
+        alert('There was an error: ' + error.toString());
+      });
+  });
   const addOutline = (event) =>{
     const newOutline = JSON.parse(event.target.value);
-    const today = new Date();
-    const dateform = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0') + "-" + String(today.getDate()).padStart(2, '0');
-    newOutline.created = dateform;
-    setOutlines([...outlines, newOutline]);
-    setAnchors([...anchors, null]);
-    alert("New course outline has been added to the list.");
+    alert(JSON.stringify(newOutline));
+    const request = {
+      method: 'POST',
+      headers: {'Content-Type': contentType},
+      body: JSON.stringify(newOutline)
+    };
+    fetch(link, request)
+      .then(async response => {
+        const data = await response.json();
+        if(!response.ok){
+          const error = (data && data.message) || response.statusText;
+          return Promise.reject(error);
+        }
+        alert('A new course outline has been added to database.');
+      }).catch(error => {
+        alert('There was an error: ' + error.toString());
+      });
   };
 
   const handleOpenForm = (event, index) => {
