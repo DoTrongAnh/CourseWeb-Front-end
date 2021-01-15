@@ -98,18 +98,18 @@ const OutlineDoc = (props) => {
     comp.weight = outline.components[i++].weight;
     components = [...components, comp];
   }
-  const grading = [{grade:"A+",range:[95.0,100.0]},
-                    {grade:"A",range:[90.0,95.0]},
-                    {grade:"A-",range:[85.0,90.0]},
-                    {grade:"B+",range:[80.0,85.0]},
-                    {grade:"B",range:[75.0,80.0]},
-                    {grade:"B-",range:[70.0,75.0]},
-                    {grade:"C+",range:[65.0,70.0]},
-                    {grade:"C",range:[60.0,65.0]},
-                    {grade:"C-",range:[56.0,60.0]},
-                    {grade:"D+",range:[53.0,56.0]},
-                    {grade:"D",range:[50.0,53.0]},
-                    {grade:"F",range:[0.0,50.0]}];
+  const grading = [{grade:"A+",range:[outline.grades.Ap,100.0]},
+                    {grade:"A",range:[outline.grades.A,outline.grades.Ap]},
+                    {grade:"A-",range:[outline.grades.Am,outline.grades.A]},
+                    {grade:"B+",range:[outline.grades.Bp,outline.grades.Am]},
+                    {grade:"B",range:[outline.grades.B,outline.grades.Bp]},
+                    {grade:"B-",range:[outline.grades.Bm,outline.grades.B]},
+                    {grade:"C+",range:[outline.grades.Cp,outline.grades.Bm]},
+                    {grade:"C",range:[outline.grades.C,outline.grades.Cp]},
+                    {grade:"C-",range:[outline.grades.Cm,outline.grades.C]},
+                    {grade:"D+",range:[outline.grades.Dp,outline.grades.Cm]},
+                    {grade:"D",range:[outline.grades.D,outline.grades.Dp]},
+                    {grade:"F",range:[0.0,outline.grades.D]}];
   return (
   <Document>
     <Page size="A4" style={styles.page} >
@@ -266,11 +266,7 @@ const OutlineDoc = (props) => {
         </TableBody>
         </Table>
         <Text style={styles.textRight} >Total:{components.reduce((count, comp)=>{return count+comp.weight;},0)+"%"}</Text>
-        <Text style={styles.text}>Note:{"\n\n"}
-        a) You must either achieve at least 50% on the final exam or achieve at least 50% on the weighted average of the midterm and final exam. You must also achieve an average of at least 50% on the lab section of the course. If you do not satisfy these caveats, you will not receive a passing grade.{"\n\n"}
-        b) Circumstances beyond one’s control (e.g. sickness, etc.), leading to missing lab session and/or delays in assignment submissions should be discussed with the course instructor as soon as possible. Proper documentation must be provided.{"\n\n"}
-        c) Conversion from a score out of 100 to a letter grade will be done using the conversion chart shown below. This grading scale can only be changed during the term if the grades will not be lowered.{"\n\n"}
-        </Text>
+        <Text style={styles.text}>Note:{outline.gradeNote}</Text>
         <Table data={grading}>
         <TableHeader style={styles.tableRow} textAlign={"center"}>
         <TableCell style={styles.title}>Letter Grade</TableCell>
@@ -365,6 +361,7 @@ function OutlineInputForm(props) {
                               description: "n/a",
                               hours: "n/a",
                               courseName:"n/a",
+                              gradeNote:"n/a",
                               courseCode:"n/a", exam:"n/a",author:"n/a",term:"n/a"});
   const [components, setComponents] = useState([{
     name:"n/a",
@@ -373,6 +370,7 @@ function OutlineInputForm(props) {
   }]);
   const [lab, setLab] = useState({type:"",number:0,safetyTaught:false,safetyExamined:false});
   const [category, setCategory] = useState({math:0.0,naturalScience:0.0,complementary:0.0,engineerScience:0.0,engineerDesign:0.0});
+  const [grades, setGrades] = useState({Ap:0.0,A:0.0,Am:0.0,Bp:0.0,B:0.0,Bm:0.0,Cp:0.0,C:0.0,Cm:0.0,Dp:0.0,D:0.0});
   const [credits, setCredits] = useState(3);
   const [calculator, setCalculator] = useState(false);
   const [sections, setSections] = useState([{name:"n/a",days:[],timestart:"n/a",timeend:"n/a",location:"n/a",type:"n/a",studentPerSupervisor:""}]);
@@ -530,6 +528,13 @@ const handleCategoryChange = (event) =>{
   setCategory(temp);
 }
 
+const handleGradeChange = (event) =>{
+  const temp = {...grades};
+  const num = parseFloat(event.target.value);
+  temp[event.target.name] = isNaN(num)? 0.0 : num;
+  setGrades(temp);
+}
+
 const handleTitleChange = (event) => {
   const { name, value } = event.target;
   const temp = {...titles};
@@ -543,6 +548,7 @@ const handleCreditChange = (event) =>{
 
     const newOutline = {description:"", courseName:"", courseCode:"",
                                         hours:"",
+                                        gradeNote:"",
                                         credits:3,
                                         courseOutcomes:[],
                                         AU:[],
@@ -551,6 +557,7 @@ const handleCreditChange = (event) =>{
                                         textbooks:[],
                                         exam:"",
                                         calculator:false,
+                                        grades:[],
                                         instructors:[],
                                         components:[{
                                           name:"",
@@ -562,11 +569,13 @@ const handleCreditChange = (event) =>{
     newOutline.term = titles.term;
     newOutline.credits = credits;
     newOutline.exam = titles.exam;
+    newOutline.gradeNote = titles.gradeNote;
     newOutline.instructors = [...instructors];
     newOutline.courseCode = titles.courseCode;
     newOutline.courseName = titles.courseName;
     newOutline.courseOutcomes = [...inputList];
     newOutline.AU = {...category};
+    newOutline.grades = {...grades};
     newOutline.lab = {...lab};
     newOutline.calculator = calculator;
     newOutline.sections = [...sections];
@@ -663,6 +672,7 @@ const handleCreditChange = (event) =>{
                       );
                     })}
           </h6>
+          <div className="list">
           <label>Location:<input name="location" onChange={(e)=>handleSection(e,index)} /></label>
           <label>Time start:<TimePicker name="timestart" onChange={(e)=>handleSectionStart(e,index)} /></label>
           <label>Time end:<TimePicker name="timeend" onChange={(e)=>handleSectionEnd(e,index)} /></label>
@@ -674,14 +684,16 @@ const handleCreditChange = (event) =>{
           <label>Students to Supervisor:<input name="studentPerSupervisor" onChange={(e)=>handleSection(e,index)} />
           {sections.length !== 1 && <button className="button is-small is-danger" onClick={()=>removeSection(index)}>Remove</button>}
           {sections.length - 1 === index && <button className="button is-small is-primary" onClick={addSection}>Add</button>}</label>
-          </div>);
+          </div></div>);
         })}
         <h5 className="title is-5">Course categories accreditation unit:</h5>
+        <div className="list">
         <label>Math:<input style={{width: "40px"}} name="math" onChange={handleCategoryChange}/></label>
         <label>Natural Science:<input style={{width: "40px"}} name="naturalScience" onChange={handleCategoryChange}/></label>
         <label>Complementary Studies:<input style={{width: "40px"}} name="complementary" onChange={handleCategoryChange}/></label>
         <label>Engineering Science:<input style={{width: "40px"}} name="engineerScience" onChange={handleCategoryChange}/></label>
         <label>Engineering Design:<input style={{width: "40px"}} name="engineerDesign" onChange={handleCategoryChange}/></label>
+        </div>
         <h5 className="title is-5">Lab experience:</h5>
         <label>Lab Type:<input name="type" onChange={handleLabChange} /></label>
         <label>Number of Labs:<input style={{width: "40px"}} name="number" onChange={handleLabChange} /></label>
@@ -749,6 +761,31 @@ const handleCreditChange = (event) =>{
             </div>
             );
         })}
+        <h5 className="title is-5">Grade note:</h5>
+        <TextField
+          id="standard-multiline-flexible"
+          multiline
+          style={{width: "700px"}}
+          margin="normal"
+          name="gradeNote"
+          rowsMax={4}
+          value={titles.gradeNote}
+          onChange={e=>handleTitleChange(e)}
+        />
+        <h6 className="title is-6">Grade breakdown (lower thresholds):</h6>
+        <div className="list">
+        <label>A+:<input name="Ap" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>A:<input name="A" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>A-:<input name="Am" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>B+:<input name="Bp" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>B:<input name="B" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>B-:<input name="Bm" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>C+:<input name="Cp" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>C:<input name="C" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>C-:<input name="Cm" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>D+:<input name="Dp" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        <label>D:<input name="D" style={{width: "40px"}} onChange={e=>handleGradeChange(e)} /></label>
+        </div>
         <h5 className="title is-5">Textbooks:</h5>
         {textbooks.map((book, index) => {
           return(
@@ -840,6 +877,22 @@ function OutlineForm(props){
     </div>
     );
   })}
+  <h5 className="title is-5">Grade note:</h5>
+  <TextareaAutosize rowsMin={4} aria-label="minimum height" value={outline.gradeNote} />
+  <h6 className="title is-6">Grade breakdown:</h6>
+  <div className="list">
+  <label>A+ minimum:{outline.grades.Ap}</label>
+  <label>A minimum:{outline.grades.A}</label>
+  <label>A- minimum:{outline.grades.Am}</label>
+  <label>B+ minimum:{outline.grades.Bp}</label>
+  <label>B minimum:{outline.grades.B}</label>
+  <label>B- minimum:{outline.grades.Bm}</label>
+  <label>C+ minimum:{outline.grades.Cp}</label>
+  <label>C minimum:{outline.grades.C}</label>
+  <label>C- minimum:{outline.grades.Cm}</label>
+  <label>D+ minimum:{outline.grades.Dp}</label>
+  <label>D minimum:{outline.grades.D}</label>
+  </div>
   {outline.textbooks.map((textbook, index) => {
     return (
     <div className="textbook">

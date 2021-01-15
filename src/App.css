@@ -33,3 +33,7 @@
   background-color:#a0f08e;
   margin-top: 20px;
 }
+.list{
+  display: flex;
+  flex-direction: column;
+}
